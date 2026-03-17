@@ -2,6 +2,8 @@ package pt.unl.fct.di.adc.firstwebapp.resources;
 
 import java.util.logging.Logger;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -14,6 +16,11 @@ import jakarta.ws.rs.core.Response;
 import pt.unl.fct.di.adc.firstwebapp.util.AuthToken;
 import pt.unl.fct.di.adc.firstwebapp.util.LoginData;
 
+import com.google.cloud.datastore.Key;
+import com.google.cloud.datastore.KeyFactory;
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.datastore.Entity;
 import com.google.gson.Gson;
 
 
@@ -25,6 +32,8 @@ public class LoginResource {
 	 * Logger Object
 	 */
 	private static final Logger LOG = Logger.getLogger(LoginResource.class.getName());
+	private static final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+	private static final KeyFactory userKeyFactory = datastore.newKeyFactory().setKind("User");
 
 	private final Gson g = new Gson();
 	
@@ -55,4 +64,30 @@ public class LoginResource {
 		}
 	}
 
+	@POST
+	@Path("/v1")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response doLoginV1(LoginData data) {
+		LOG.fine("Attempt to login user: " + data.username);
+
+		Key userKey = userKeyFactory.newKey(data.username);
+		Entity user = datastore.get(userKey);
+
+		if(user != null) {
+			String hashedPWD = user.getString("user_pwd");
+			if(hashedPWD.equals(DigestUtils.sha512Hex(data.password))) {
+				LOG.info("User '" + data.username + "' logged in successfully.");
+				AuthToken at = new AuthToken(data.username);
+				return Response.ok(g.toJson(at)).build();
+			}
+			else {
+				LOG.warning("User '" + data.username + "' provided wrong password.");
+				return Response.status(Response.Status.FORBIDDEN).entity("Incorrect username or password.").build();
+			}
+		}
+		else {
+			LOG.warning("User '" + data.username + "' does not exist.");
+			return Response.status(Response.Status.FORBIDDEN).entity("Incorrect username or password.").build();
+		}
+	}
 }
