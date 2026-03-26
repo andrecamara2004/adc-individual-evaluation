@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import pt.unl.fct.di.adc.firstwebapp.util.AuthToken;
 import pt.unl.fct.di.adc.firstwebapp.util.ErrorCodes;
 import pt.unl.fct.di.adc.firstwebapp.util.LoginData;
+import pt.unl.fct.di.adc.firstwebapp.util.LoginRequest;
 import pt.unl.fct.di.adc.firstwebapp.util.ResponseBuilder;
 
 import com.google.cloud.Timestamp;
@@ -78,7 +79,8 @@ public class LoginResource {
 	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doLogin(LoginData data) {
+	public Response doLogin(LoginRequest request) {
+		LoginData data = request.input;
 		LOG.fine(LOG_MESSAGE_LOGIN_ATTEMP + data.username);
 
 		if (!data.validLogin())

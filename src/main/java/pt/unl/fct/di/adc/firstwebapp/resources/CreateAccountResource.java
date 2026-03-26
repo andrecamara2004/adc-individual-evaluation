@@ -21,6 +21,7 @@ import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.DatastoreOptions;
 
+import pt.unl.fct.di.adc.firstwebapp.util.CreateAccountRequest;
 import pt.unl.fct.di.adc.firstwebapp.util.ErrorCodes;
 import pt.unl.fct.di.adc.firstwebapp.util.ResponseBuilder;
 import pt.unl.fct.di.adc.firstwebapp.util.RegisterData;
@@ -38,7 +39,8 @@ public class CreateAccountResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createAccount(RegisterData data) {
+	public Response createAccount(CreateAccountRequest request) {
+		RegisterData data = request.input;
 		LOG.fine("Attempt to create account with username: " + data.username);
 
 		if (!data.validRegistration())
