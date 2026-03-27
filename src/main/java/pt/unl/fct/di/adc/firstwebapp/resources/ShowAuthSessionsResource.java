@@ -9,39 +9,33 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 import pt.unl.fct.di.adc.firstwebapp.util.*;
 
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
-import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.Query;
-import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.*;
 
 import com.google.gson.Gson;
 
-@Path("/showusers")
+@Path("/showauthsessions")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-public class ShowUsersResource {
-    private static final Logger LOG = Logger.getLogger(ShowUsersResource.class.getName());
-    private final Gson g = new Gson();
-    private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+public class ShowAuthSessionsResource {
 
-    public ShowUsersResource() {
-    }
+    private static final Logger LOG = Logger.getLogger(ShowAuthSessionsResource.class.getName());
+    private static final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+    private final Gson g = new Gson();
+
+    public ShowAuthSessionsResource() { }
 
     @POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response showUsers(ShowUsersRequest data) {
-        LOG.fine("Op3: showUsers");
+    public Response showAuthSessions(ShowAuthSessionsData data) {
+        LOG.fine("Op6: showAuthSessions");
 
         // Validate token
         AuthToken token = data.token;
         if (token == null || token.tokenID == null || token.username == null) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.ok()
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_TOKEN, ErrorCodes.INVALID_TOKEN_MSG)))
                     .build();
         }
@@ -68,31 +62,39 @@ public class ShowUsersResource {
                     .build();
         }
 
-        // check role
+        // Check if user is admin
         String callerRole = session.getString("role");
-        if (!callerRole.equals("ADMIN") && !callerRole.equals("BOFFICER")) {
+        if (!callerRole.equals("ADMIN")) {
             return Response.ok()
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.UNAUTHORIZED, ErrorCodes.UNAUTHORIZED_MSG)))
                     .build();
         }
 
-        // query users
+        // Query all active sessions
         Query<Entity> query = Query.newEntityQueryBuilder()
-                .setKind("User")
+                .setKind("Token")
                 .build();
         QueryResults<Entity> results = datastore.run(query);
 
-        List<Map<String, String>> usersList = new ArrayList<>();
+        List<Map<String, Object>> sessionsList = new ArrayList<>();
+        long now = System.currentTimeMillis();
+
         while (results.hasNext()) {
-            Entity user = results.next();
-            Map<String, String> userMap = new LinkedHashMap<>();
-            userMap.put("username", user.getKey().getName());
-            userMap.put("role", user.getString("user_role"));
-            usersList.add(userMap);
+            Entity s = results.next();
+            long expiresAt = s.getLong("expiresAt");
+
+            if (now > expiresAt) continue;
+
+            Map<String, Object> sm = new LinkedHashMap<>();
+            sm.put("tokenId", s.getString("tokenID"));
+            sm.put("username", s.getString("username"));
+            sm.put("role", s.getString("role"));
+            sm.put("expiresAt", expiresAt);
+            sessionsList.add(sm);
         }
 
         Map<String, Object> responseData = new LinkedHashMap<>();
-        responseData.put("users", usersList);
+        responseData.put("sessions", sessionsList);
 
         // return result
         return Response.ok()
@@ -100,3 +102,4 @@ public class ShowUsersResource {
                 .build();
     }
 }
+

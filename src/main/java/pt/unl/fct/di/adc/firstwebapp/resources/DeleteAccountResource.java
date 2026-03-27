@@ -9,39 +9,34 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 import pt.unl.fct.di.adc.firstwebapp.util.*;
 
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
-import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.Query;
-import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.*;
 
 import com.google.gson.Gson;
 
-@Path("/showusers")
+@Path("/deleteaccount")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-public class ShowUsersResource {
-    private static final Logger LOG = Logger.getLogger(ShowUsersResource.class.getName());
+public class DeleteAccountResource {
+
+    private static final Logger LOG = Logger.getLogger(DeleteAccountResource.class.getName());
     private final Gson g = new Gson();
     private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
-    public ShowUsersResource() {
+    public DeleteAccountResource() {
     }
 
     @POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response showUsers(ShowUsersRequest data) {
-        LOG.fine("Op3: showUsers");
+    public Response deleteAccount(DeleteAccountData data) {
+        LOG.fine("Op4: deleteAccount");
 
         // Validate token
         AuthToken token = data.token;
         if (token == null || token.tokenID == null || token.username == null) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.ok()
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_TOKEN, ErrorCodes.INVALID_TOKEN_MSG)))
                     .build();
         }
@@ -70,31 +65,54 @@ public class ShowUsersResource {
 
         // check role
         String callerRole = session.getString("role");
-        if (!callerRole.equals("ADMIN") && !callerRole.equals("BOFFICER")) {
+        if (!callerRole.equals("ADMIN")) {
             return Response.ok()
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.UNAUTHORIZED, ErrorCodes.UNAUTHORIZED_MSG)))
                     .build();
         }
 
-        // query users
-        Query<Entity> query = Query.newEntityQueryBuilder()
-                .setKind("User")
-                .build();
-        QueryResults<Entity> results = datastore.run(query);
+        DeleteAccountInput input = data.input;
 
-        List<Map<String, String>> usersList = new ArrayList<>();
-        while (results.hasNext()) {
-            Entity user = results.next();
-            Map<String, String> userMap = new LinkedHashMap<>();
-            userMap.put("username", user.getKey().getName());
-            userMap.put("role", user.getString("user_role"));
-            usersList.add(userMap);
+        // Validate input
+        if (input == null || input.username == null || input.username.isBlank()) {
+            return Response.ok()
+                    .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_INPUT, ErrorCodes.INVALID_INPUT_MSG)))
+                    .build();
         }
 
-        Map<String, Object> responseData = new LinkedHashMap<>();
-        responseData.put("users", usersList);
+        // Delete user and associated tokens
+        String targetUsername = input.username;
 
-        // return result
+        Key userKey = datastore.newKeyFactory().setKind("User").newKey(targetUsername);
+        Entity user = datastore.get(userKey);
+        if (user == null) {
+            return Response.ok()
+                    .entity(g.toJson(new ResponseBuilder(ErrorCodes.USER_NOT_FOUND, ErrorCodes.USER_NOT_FOUND_MSG)))
+                    .build();
+        }
+
+        datastore.delete(userKey);
+
+        Query<Entity> tokenQuery = Query.newEntityQueryBuilder()
+                .setKind("Token")
+                .setFilter(StructuredQuery.PropertyFilter.eq("username", targetUsername))
+                .build();
+        QueryResults<Entity> tokens = datastore.run(tokenQuery);
+
+        List<Key> keysToDelete = new ArrayList<>();
+        while (tokens.hasNext()) {
+            keysToDelete.add(tokens.next().getKey());
+        }
+        if (!keysToDelete.isEmpty()) {
+            datastore.delete(keysToDelete.toArray(new Key[0]));
+        }
+
+        LOG.info("Account deleted: " + targetUsername);
+
+        Map<String, String> responseData = new LinkedHashMap<>();
+        responseData.put("message", "Account deleted successfully");
+
+        // return success
         return Response.ok()
                 .entity(g.toJson(new ResponseBuilder("success", responseData)))
                 .build();

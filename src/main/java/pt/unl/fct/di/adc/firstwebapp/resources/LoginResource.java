@@ -14,19 +14,16 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
 
-import jakarta.servlet.http.HttpServletRequest;
 
 import pt.unl.fct.di.adc.firstwebapp.util.AuthToken;
 import pt.unl.fct.di.adc.firstwebapp.util.ErrorCodes;
 import pt.unl.fct.di.adc.firstwebapp.util.LoginData;
+import pt.unl.fct.di.adc.firstwebapp.util.LoginRequest;
 import pt.unl.fct.di.adc.firstwebapp.util.ResponseBuilder;
 
 import com.google.cloud.Timestamp;
@@ -36,7 +33,6 @@ import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.PathElement;
-import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.DatastoreOptions;
@@ -78,9 +74,11 @@ public class LoginResource {
 	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doLogin(LoginData data) {
+	public Response doLogin(LoginRequest request) {
+		LoginData data = request.input;
 		LOG.fine(LOG_MESSAGE_LOGIN_ATTEMP + data.username);
 
+		// Validade creds
 		if (!data.validLogin())
 			return Response.status(Status.FORBIDDEN)
 					.entity(g.toJson(
@@ -115,6 +113,7 @@ public class LoginResource {
 				String role = user.getString("user_role");
 				AuthToken token = new AuthToken(data.username, role);
 
+				// Generate token and store it in the datastore
 				Key tokenKey = tokenKeyFactory.newKey(token.tokenID);
 				Entity tokenEntity = Entity.newBuilder(tokenKey)
 						.set("tokenID", token.tokenID)
@@ -130,6 +129,7 @@ public class LoginResource {
 				Map<String, Object> responseData = new HashMap<>();
 				responseData.put("token",token);
 
+				// Return token and success
 				LOG.info(LOG_MESSAGE_LOGIN_SUCCESSFUL + data.username);
 				return Response.ok(g.toJson(new ResponseBuilder("success", responseData)))
 						.build();
