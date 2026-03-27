@@ -1,4 +1,4 @@
-# ADC 2025/2026 — Individual Evaluation: Demo Guide
+# ADC 2025/2026 — Individual Evaluation
 
 ## Project Info
 
@@ -60,11 +60,6 @@ Wait until you see `Dev App Server is now running`. The app will be available at
 http://localhost:8080
 ```
 
-### 2.4 Test Locally (Postman)
-
-All endpoints use `POST` with `Content-Type: application/json`.
-Base URL: `http://localhost:8080/rest/`
-
 ---
 
 ## 3. Cloud Deployment
@@ -94,199 +89,7 @@ Base URL: `https://my-first-adc-project.ew.r.appspot.com/rest/`
 
 ---
 
-## 4. Testing All 10 Operations
-
-**Important:** Start with empty databases (no accounts, no tokens).
-
-### Op1 — Create Accounts
-
-**POST** `/rest/createaccount`
-
-Create ADMIN:
-```json
-{
-  "input": {
-    "username": "admin@adc.pt",
-    "password": "admin123",
-    "confirmation": "admin123",
-    "phone": "912345678",
-    "address": "Lisboa",
-    "role": "ADMIN"
-  }
-}
-```
-
-Create USER:
-```json
-{
-  "input": {
-    "username": "user@adc.pt",
-    "password": "user123",
-    "confirmation": "user123",
-    "phone": "919876543",
-    "address": "Porto",
-    "role": "USER"
-  }
-}
-```
-
-Create BOFFICER:
-```json
-{
-  "input": {
-    "username": "officer@adc.pt",
-    "password": "officer123",
-    "confirmation": "officer123",
-    "phone": "913456789",
-    "address": "Faro",
-    "role": "BOFFICER"
-  }
-}
-```
-
-### Op2 — Login
-
-**POST** `/rest/login`
-
-Login as ADMIN (save the token for subsequent tests):
-```json
-{
-  "input": {
-    "username": "admin@adc.pt",
-    "password": "admin123"
-  }
-}
-```
-
-Login as USER:
-```json
-{
-  "input": {
-    "username": "user@adc.pt",
-    "password": "user123"
-  }
-}
-```
-
-### Op3 — Show Users
-
-**POST** `/rest/showusers` (Requires ADMIN or BOFFICER token)
-
-```json
-{
-  "input": {},
-  "token": { <PASTE ADMIN TOKEN HERE> }
-}
-```
-
-### Op4 — Delete Account
-
-**POST** `/rest/deleteaccount` (Requires ADMIN token)
-
-```json
-{
-  "input": {
-    "username": "officer@adc.pt"
-  },
-  "token": { <PASTE ADMIN TOKEN HERE> }
-}
-```
-
-Verify with Op3 (ShowUsers) that the account no longer appears.
-
-### Op5 — Modify Account Attributes
-
-**POST** `/rest/modaccount` (ADMIN: any account, BOFFICER: own + USER, USER: own only)
-
-```json
-{
-  "input": {
-    "username": "user@adc.pt",
-    "attributes": {
-      "phone": "999999999",
-      "address": "Coimbra"
-    }
-  },
-  "token": { <PASTE ADMIN TOKEN HERE> }
-}
-```
-
-### Op6 — Show Authenticated Sessions
-
-**POST** `/rest/showauthsessions` (Requires ADMIN token)
-
-```json
-{
-  "input": {},
-  "token": { <PASTE ADMIN TOKEN HERE> }
-}
-```
-
-### Op7 — Show User Role
-
-**POST** `/rest/showuserrole` (Requires ADMIN or BOFFICER token)
-
-```json
-{
-  "input": {
-    "username": "user@adc.pt"
-  },
-  "token": { <PASTE ADMIN TOKEN HERE> }
-}
-```
-
-### Op8 — Change User Role
-
-**POST** `/rest/changeuserrole` (Requires ADMIN token)
-
-```json
-{
-  "input": {
-    "username": "user@adc.pt",
-    "newRole": "BOFFICER"
-  },
-  "token": { <PASTE ADMIN TOKEN HERE> }
-}
-```
-
-Verify with Op7 that the role changed.
-
-### Op9 — Change User Password
-
-**POST** `/rest/changeuserpwd` (Any role, own password only)
-
-Login as user@adc.pt first, then use that token:
-```json
-{
-  "input": {
-    "username": "user@adc.pt",
-    "oldPassword": "user123",
-    "newPassword": "newpass456"
-  },
-  "token": { <PASTE USER TOKEN HERE> }
-}
-```
-
-Verify: login with old password should fail (9900), login with new password should succeed.
-
-### Op10 — Logout
-
-**POST** `/rest/logout` (USER/BOFFICER: own session, ADMIN: any session)
-
-```json
-{
-  "input": {
-    "username": "user@adc.pt"
-  },
-  "token": { <PASTE USER TOKEN HERE> }
-}
-```
-
-Verify: using the same token again should return 9903 (INVALID_TOKEN).
-
----
-
-## 5. Error Codes Reference
+## Error Codes Reference
 
 | Code | Error | Description |
 |------|-------|-------------|
@@ -301,7 +104,7 @@ Verify: using the same token again should return 9903 (INVALID_TOKEN).
 
 ---
 
-## 6. Role-Based Access Control (RBAC)
+## Role-Based Access Control (RBAC)
 
 | Operation | USER | BOFFICER | ADMIN |
 |-----------|------|----------|-------|
@@ -318,7 +121,7 @@ Verify: using the same token again should return 9903 (INVALID_TOKEN).
 
 ---
 
-## 7. Clean Up (Before Demo / Submission)
+## Clean Up (Before Demo / Submission)
 
 ### Clear Cloud Datastore
 
@@ -334,10 +137,9 @@ rm -rf ~/.config/gcloud/emulators/datastore
 
 ---
 
-## 8. Tech Stack
+## Tech Stack
 
 - **Runtime:** Java 21 on Google App Engine (Standard)
-- **Framework:** Jersey (Jakarta EE) with Gson
+- **Framework:** Jersey
 - **Database:** Google Firestore in Datastore mode
-- **Password Hashing:** SHA-512 (Apache Commons Codec)
-- **Token Validity:** 2 hours
+- token expires after 15 minutes
