@@ -9,7 +9,6 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 import pt.unl.fct.di.adc.firstwebapp.util.*;
 
@@ -17,12 +16,11 @@ import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.Query;
-import com.google.cloud.datastore.QueryResults;
 
 import com.google.gson.Gson;
 
 @Path("/showuserrole")
+@Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
 public class ShowUserRoleResource {
 
     private static final Logger LOG = Logger.getLogger(ShowUserRoleResource.class.getName());
@@ -30,17 +28,18 @@ public class ShowUserRoleResource {
     private final Gson g = new Gson();
 
     @POST
+    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response showUserRole(ShowUserRoleRequest request) {
         LOG.fine("Op7: showUserRole");
 
         AuthToken token = request.getToken();
         String targetUserId = request.getInput().getUserId();
 
+        // Validate input
         if (targetUserId == null || targetUserId.isBlank())
             return Response.ok()
-                    .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_TOKEN, ErrorCodes.INVALID_TOKEN_MSG)))
+                    .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_INPUT, ErrorCodes.INVALID_INPUT_MSG)))
                     .build();
 
         // Validade token
@@ -53,7 +52,7 @@ public class ShowUserRoleResource {
                     .build();
         }
 
-        if( !tokenEntity.getString("username").equals(token.username) ) {
+        if (!tokenEntity.getString("username").equals(token.username)) {
             return Response.ok()
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_TOKEN, ErrorCodes.INVALID_TOKEN_MSG)))
                     .build();
