@@ -32,6 +32,7 @@ public class ShowAuthSessionsResource {
     public Response showAuthSessions(ShowAuthSessionsData data) {
         LOG.fine("Op6: showAuthSessions");
 
+        // Validate token
         AuthToken token = data.token;
         if (token == null || token.tokenID == null || token.username == null) {
             return Response.ok()
@@ -61,6 +62,7 @@ public class ShowAuthSessionsResource {
                     .build();
         }
 
+        // Check if user is admin
         String callerRole = session.getString("role");
         if (!callerRole.equals("ADMIN")) {
             return Response.ok()
@@ -68,6 +70,7 @@ public class ShowAuthSessionsResource {
                     .build();
         }
 
+        // Query all active sessions
         Query<Entity> query = Query.newEntityQueryBuilder()
                 .setKind("Token")
                 .build();
@@ -93,6 +96,7 @@ public class ShowAuthSessionsResource {
         Map<String, Object> responseData = new LinkedHashMap<>();
         responseData.put("sessions", sessionsList);
 
+        // return result
         return Response.ok()
                 .entity(g.toJson(new ResponseBuilder("success", responseData)))
                 .build();

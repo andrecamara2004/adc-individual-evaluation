@@ -43,10 +43,12 @@ public class CreateAccountResource {
 		RegisterData data = request.input;
 		LOG.fine("Attempt to create account with username: " + data.username);
 
+		// Validate input
 		if (!data.validRegistration())
 			return Response.status(Status.BAD_REQUEST)
 					.entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_INPUT, ErrorCodes.INVALID_INPUT_MSG))).build();
 
+		// Create user
 		try {
 			Transaction txn = datastore.newTransaction();
 			Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
@@ -74,6 +76,7 @@ public class CreateAccountResource {
                 responseData.put("username", data.username);
                 responseData.put("role", data.role);
 
+				//Return success
 				return Response.ok(g.toJson(new ResponseBuilder("success", responseData))).build();
 			}
 		} catch (Exception e) {

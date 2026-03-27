@@ -38,6 +38,7 @@ public class ShowUsersResource {
     public Response showUsers(ShowUsersRequest data) {
         LOG.fine("Op3: showUsers");
 
+        // Validate token
         AuthToken token = data.token;
         if (token == null || token.tokenID == null || token.username == null) {
             return Response.status(Status.BAD_REQUEST)
@@ -67,6 +68,7 @@ public class ShowUsersResource {
                     .build();
         }
 
+        // check role
         String callerRole = session.getString("role");
         if (!callerRole.equals("ADMIN") && !callerRole.equals("BOFFICER")) {
             return Response.ok()
@@ -74,6 +76,7 @@ public class ShowUsersResource {
                     .build();
         }
 
+        // query users
         Query<Entity> query = Query.newEntityQueryBuilder()
                 .setKind("User")
                 .build();
@@ -91,6 +94,7 @@ public class ShowUsersResource {
         Map<String, Object> responseData = new LinkedHashMap<>();
         responseData.put("users", usersList);
 
+        // return result
         return Response.ok()
                 .entity(g.toJson(new ResponseBuilder("success", responseData)))
                 .build();

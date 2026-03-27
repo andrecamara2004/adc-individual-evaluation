@@ -32,6 +32,7 @@ public class ModAccountResource {
     public Response modAccount(ModAccountData data) {
         LOG.fine("Op5: modAccount");
 
+        // Validate token
         AuthToken token = data.token;
         if (token == null || token.tokenID == null || token.username == null) {
             return Response.ok()
@@ -60,6 +61,8 @@ public class ModAccountResource {
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.TOKEN_EXPIRED, ErrorCodes.TOKEN_EXPIRED_MSG)))
                     .build();
         }
+
+        // Validate input
         ModAccountInput input = data.input;
 
         if (input == null || input.username == null || input.username.isBlank()
@@ -69,12 +72,14 @@ public class ModAccountResource {
                     .build();
         }
 
-        // Username não pode ser alterado (é a primary key)
+        // Username cannot be modified
         if (input.attributes.containsKey("username")) {
             return Response.ok()
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_INPUT, ErrorCodes.INVALID_INPUT_MSG)))
                     .build();
         }
+
+        // Get target user
         String targetUsername = input.username;
 
         Key targetKey = datastore.newKeyFactory().setKind("User").newKey(targetUsername);
@@ -118,7 +123,7 @@ public class ModAccountResource {
                     builder.set("user_address", value);
                     break;
                 default:
-                    // Atributo desconhecido — ignorar ou dar erro
+                    // Invalid attribute key
                     return Response.ok()
                             .entity(g.toJson(
                                     new ResponseBuilder(ErrorCodes.INVALID_INPUT, ErrorCodes.INVALID_INPUT_MSG)))
@@ -126,6 +131,7 @@ public class ModAccountResource {
             }
         }
 
+        // Update user
         datastore.put(builder.build());
 
         LOG.info("Account modified: " + targetUsername + " by " + callerUsername);
@@ -133,6 +139,7 @@ public class ModAccountResource {
         Map<String, String> responseData = new LinkedHashMap<>();
         responseData.put("message", "Updated successfully");
 
+        // return success
         return Response.ok()
                 .entity(g.toJson(new ResponseBuilder("success", responseData)))
                 .build();

@@ -33,6 +33,7 @@ public class DeleteAccountResource {
     public Response deleteAccount(DeleteAccountData data) {
         LOG.fine("Op4: deleteAccount");
 
+        // Validate token
         AuthToken token = data.token;
         if (token == null || token.tokenID == null || token.username == null) {
             return Response.ok()
@@ -62,6 +63,7 @@ public class DeleteAccountResource {
                     .build();
         }
 
+        // check role
         String callerRole = session.getString("role");
         if (!callerRole.equals("ADMIN")) {
             return Response.ok()
@@ -71,12 +73,14 @@ public class DeleteAccountResource {
 
         DeleteAccountInput input = data.input;
 
+        // Validate input
         if (input == null || input.username == null || input.username.isBlank()) {
             return Response.ok()
                     .entity(g.toJson(new ResponseBuilder(ErrorCodes.INVALID_INPUT, ErrorCodes.INVALID_INPUT_MSG)))
                     .build();
         }
 
+        // Delete user and associated tokens
         String targetUsername = input.username;
 
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(targetUsername);
@@ -108,6 +112,7 @@ public class DeleteAccountResource {
         Map<String, String> responseData = new LinkedHashMap<>();
         responseData.put("message", "Account deleted successfully");
 
+        // return success
         return Response.ok()
                 .entity(g.toJson(new ResponseBuilder("success", responseData)))
                 .build();
