@@ -1,13 +1,13 @@
 package pt.unl.fct.di.adc.firstwebapp.util;
 
 public class ShowUserRoleData {
-    private String userId;
+    private String username;
 
-    public String getUserId() {
-        return userId;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUsername(String userId) {
+        this.username = userId;
     }
 }

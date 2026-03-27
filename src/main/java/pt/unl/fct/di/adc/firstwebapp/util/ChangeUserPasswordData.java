@@ -1,16 +1,16 @@
 package pt.unl.fct.di.adc.firstwebapp.util;
 
 public class ChangeUserPasswordData {
-    private String userId;
+    private String username;
     private String oldPassword;
     private String newPassword;
 
-    public String getUserId() {
-        return userId;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUsername(String userId) {
+        this.username = userId;
     }
 
     public String getOldPassword() {

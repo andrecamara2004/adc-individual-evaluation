@@ -32,7 +32,7 @@ public class ChangeUserRoleResource {
         LOG.fine("Op8: changeUserRole");
 
         AuthToken token = request.getToken();
-        String targetUserId = request.getInput().getUserId();
+        String targetUserId = request.getInput().getUsername();
         String newRole = request.getInput().getNewRole();
 
         // Validate input

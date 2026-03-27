@@ -29,7 +29,7 @@ public class LogoutResource {
         LOG.fine("Op10: logout");
 
         AuthToken token = request.getToken();
-        String targetUserId = request.getInput().getUserID();
+        String targetUserId = request.getInput().getUsername();
 
         // Validate input
         if (targetUserId == null || targetUserId.isBlank())
