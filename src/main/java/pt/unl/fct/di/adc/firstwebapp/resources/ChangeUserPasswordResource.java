@@ -18,7 +18,7 @@ import com.google.cloud.datastore.*;
 
 import com.google.gson.Gson;
 
-@Path("/changeuserpassword")
+@Path("/changeuserpwd")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
 public class ChangeUserPasswordResource {
     private static final Logger LOG = Logger.getLogger(ChangeUserPasswordResource.class.getName());
@@ -32,7 +32,7 @@ public class ChangeUserPasswordResource {
         LOG.fine("Op9: changeUserPassword");
 
         AuthToken token = request.getToken();
-        String targetUserId = request.getInput().getUserId();
+        String targetUserId = request.getInput().getUsername();
         String oldPassword = request.getInput().getOldPassword();
         String newPassword = request.getInput().getNewPassword();
 

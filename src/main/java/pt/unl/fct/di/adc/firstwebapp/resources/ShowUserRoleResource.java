@@ -34,7 +34,7 @@ public class ShowUserRoleResource {
         LOG.fine("Op7: showUserRole");
 
         AuthToken token = request.getToken();
-        String targetUserId = request.getInput().getUserId();
+        String targetUserId = request.getInput().getUsername();
 
         // Validate input
         if (targetUserId == null || targetUserId.isBlank())
