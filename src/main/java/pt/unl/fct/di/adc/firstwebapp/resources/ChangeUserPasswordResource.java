@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.Response;
 
 import pt.unl.fct.di.adc.firstwebapp.util.*;
 
-import com.google.appengine.repackaged.org.apache.commons.codec.cli.Digest;
 import com.google.cloud.datastore.*;
 
 import com.google.gson.Gson;
